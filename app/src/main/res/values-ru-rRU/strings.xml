@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GeoQuiz</string>
+    <string name="question_text">Канберра столица Австралии?</string>
+    <string name="true_button">Да</string>
+    <string name="false_button">Нет</string>
+</resources>
