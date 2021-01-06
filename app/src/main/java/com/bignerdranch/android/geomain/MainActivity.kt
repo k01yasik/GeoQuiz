@@ -2,10 +2,160 @@ package com.bignerdranch.android.geomain
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
+
+private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var trueButton: Button
+    private lateinit var falseButton: Button
+    private lateinit var nextButton: Button
+    private lateinit var prevButton: Button
+    private lateinit var questionTextView: TextView
+    private lateinit var resultTextView: TextView
+    private var resultAnswers: Int = 0
+
+    private val questionBank = listOf(
+            Question(R.string.question_australia, true),
+            Question(R.string.question_oceans, true),
+            Question(R.string.question_mideast, false),
+            Question(R.string.question_africa, false),
+            Question(R.string.question_americas, true),
+            Question(R.string.question_asia, true)
+    )
+
+    private var currentIndex = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate(Bundle?) called")
         setContentView(R.layout.activity_main)
+
+        trueButton = findViewById(R.id.true_button)
+        falseButton = findViewById(R.id.false_button)
+        nextButton = findViewById(R.id.next_button)
+        prevButton = findViewById(R.id.prev_button)
+        questionTextView = findViewById(R.id.question_text_view)
+        resultTextView = findViewById(R.id.result_text_view)
+
+        setText()
+
+        trueButton.setOnClickListener{ _: View ->
+            checkAnswer(true)
+            changeButtonState(false)
+            setGiven()
+            calculateResult()
+            setText()
+        }
+
+        falseButton.setOnClickListener{ _: View ->
+            checkAnswer(false)
+            changeButtonState(false)
+            setGiven()
+            calculateResult()
+            setText()
+        }
+
+        nextButton.setOnClickListener { _: View ->
+            currentIndex = (currentIndex + 1) % questionBank.size
+            updateQuestion()
+            changeButtonState(true)
+            if (questionBank[currentIndex].given) {
+                changeButtonState(false)
+            }
+        }
+
+        prevButton.setOnClickListener { _: View ->
+            currentIndex -= 1
+            if (currentIndex == -1) currentIndex = questionBank.size - 1
+            updateQuestion()
+            changeButtonState(true)
+            if (questionBank[currentIndex].given) {
+                changeButtonState(false)
+            }
+        }
+
+        questionTextView.setOnClickListener { _: View ->
+            currentIndex = (currentIndex + 1) % questionBank.size
+            updateQuestion()
+        }
+
+        updateQuestion()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart() called")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume() called")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause() called")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop() called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy() called")
+    }
+
+    private fun setGiven() {
+        questionBank[currentIndex].given = true
+    }
+
+    private fun setText() {
+        resultTextView.text = getString(R.string.correct_answers, resultAnswers, questionBank.size)
+    }
+
+    private fun calculateResult() {
+        var count: Int = 0
+
+        for (item in questionBank) {
+            if (item.given and item.correct) {
+                count += 1
+            }
+        }
+
+        resultAnswers = count
+    }
+
+    private fun changeButtonState(state: Boolean) {
+        trueButton.isEnabled = state
+        falseButton.isEnabled = state
+    }
+
+    private fun updateQuestion() {
+        val questionTextResId = questionBank[currentIndex].textResId
+        questionTextView.setText(questionTextResId)
+    }
+
+    private fun checkAnswer(userAnswer: Boolean) {
+        val correctAnswer = questionBank[currentIndex].answer
+        val messageResId: Int
+
+        if (userAnswer == correctAnswer) {
+            messageResId = R.string.correct_toast
+            questionBank[currentIndex].correct = true
+        } else {
+            messageResId = R.string.incorrect_toast
+        }
+
+        Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
     }
 }
