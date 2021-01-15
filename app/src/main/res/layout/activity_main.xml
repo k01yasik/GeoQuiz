@@ -19,23 +19,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        style="?android:buttonBarStyle">
+        android:gravity="center">
 
         <Button
             android:id="@+id/true_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/true_button"
-            android:layout_marginEnd="24dp"
-            style="?android:buttonBarButtonStyle"/>
+            android:layout_marginEnd="24dp" />
 
         <Button
             android:id="@+id/false_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/false_button"
-            style="?android:buttonBarButtonStyle"/>
+            android:text="@string/false_button" />
 
     </LinearLayout>
 
@@ -44,23 +41,20 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="24dp"
-        android:gravity="center"
-        style="?android:buttonBarStyle">
+        android:gravity="center">
 
         <Button
             android:id="@+id/prev_button"
-            style="?android:buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:background="@color/purple_500"
             android:text="@string/prev_button"
             android:drawablePadding="4dp"
-            android:drawableLeft="@drawable/arrow_left" />
+            android:drawableStart="@drawable/arrow_left" />
 
         <Button
             android:id="@+id/next_button"
-            style="?android:buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:drawablePadding="4dp"
@@ -69,6 +63,13 @@
             android:drawableEnd="@drawable/arrow_right" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/cheat_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/cheat_button" />
 
     <TextView
         android:id="@+id/result_text_view"

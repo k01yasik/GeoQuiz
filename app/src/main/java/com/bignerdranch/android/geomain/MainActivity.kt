@@ -1,16 +1,20 @@
 package com.bignerdranch.android.geomain
 
+import android.app.Activity
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.view.View
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
 
 private const val TAG = "MainActivity"
+private const val KEY_INDEX = "index"
+private const val LIST_INDEX = "list"
+private const val REQUEST_CODE_CHEAT = 0
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,20 +22,34 @@ class MainActivity : AppCompatActivity() {
     private lateinit var falseButton: Button
     private lateinit var nextButton: Button
     private lateinit var prevButton: Button
+    private lateinit var cheatButton: Button
     private lateinit var questionTextView: TextView
     private lateinit var resultTextView: TextView
-    private var resultAnswers: Int = 0
 
-    private val questionBank = listOf(
-            Question(R.string.question_australia, true),
-            Question(R.string.question_oceans, true),
-            Question(R.string.question_mideast, false),
-            Question(R.string.question_africa, false),
-            Question(R.string.question_americas, true),
-            Question(R.string.question_asia, true)
-    )
+    private val quizViewModel: QuizViewModel by lazy {
+        ViewModelProvider(this).get(QuizViewModel::class.java)
+    }
 
-    private var currentIndex = 0
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode != Activity.RESULT_OK) {
+            return
+        }
+
+        if (requestCode == REQUEST_CODE_CHEAT) {
+            quizViewModel.isCheater = data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
+        }
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+
+        Log.d(TAG, "onRestoreInstanceState called")
+
+        quizViewModel.currentIndex = savedInstanceState.getInt(KEY_INDEX)
+        savedInstanceState.getParcelableArrayList<Question>(LIST_INDEX)?.let { quizViewModel.setQuestionBank(it.toList()) }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,16 +60,24 @@ class MainActivity : AppCompatActivity() {
         falseButton = findViewById(R.id.false_button)
         nextButton = findViewById(R.id.next_button)
         prevButton = findViewById(R.id.prev_button)
+        cheatButton = findViewById(R.id.cheat_button)
         questionTextView = findViewById(R.id.question_text_view)
         resultTextView = findViewById(R.id.result_text_view)
 
         setText()
 
+        changeButtonStatusIfCurrentQuestionIsGiven()
+
+        cheatButton.setOnClickListener{_: View ->
+            val answerIsTrue = quizViewModel.currentQuestionAnswer
+            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
+            startActivityForResult(intent, REQUEST_CODE_CHEAT)
+        }
+
         trueButton.setOnClickListener{ _: View ->
             checkAnswer(true)
             changeButtonState(false)
             setGiven()
-            calculateResult()
             setText()
         }
 
@@ -59,35 +85,44 @@ class MainActivity : AppCompatActivity() {
             checkAnswer(false)
             changeButtonState(false)
             setGiven()
-            calculateResult()
             setText()
         }
 
         nextButton.setOnClickListener { _: View ->
-            currentIndex = (currentIndex + 1) % questionBank.size
+            quizViewModel.moveToNext()
             updateQuestion()
             changeButtonState(true)
-            if (questionBank[currentIndex].given) {
-                changeButtonState(false)
-            }
+            changeButtonStatusIfCurrentQuestionIsGiven()
+            resetCheaterState()
         }
 
         prevButton.setOnClickListener { _: View ->
-            currentIndex -= 1
-            if (currentIndex == -1) currentIndex = questionBank.size - 1
+            quizViewModel.decreaseCurrentIndex()
+            if (quizViewModel.currentIndex == -1) quizViewModel.currentIndex = quizViewModel.size - 1
             updateQuestion()
             changeButtonState(true)
-            if (questionBank[currentIndex].given) {
-                changeButtonState(false)
-            }
+            changeButtonStatusIfCurrentQuestionIsGiven()
+            resetCheaterState()
         }
 
         questionTextView.setOnClickListener { _: View ->
-            currentIndex = (currentIndex + 1) % questionBank.size
+            quizViewModel.moveToNext()
             updateQuestion()
         }
 
         updateQuestion()
+    }
+
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        super.onSaveInstanceState(savedInstanceState)
+        Log.d(TAG, "onSaveInstanceState")
+        savedInstanceState.putInt(KEY_INDEX, quizViewModel.currentIndex)
+        val casted = ArrayList<Question>(quizViewModel.questions)
+        savedInstanceState.putParcelableArrayList(LIST_INDEX, casted)
+    }
+
+    private fun resetCheaterState() {
+        quizViewModel.isCheater = false
     }
 
     override fun onStart() {
@@ -115,24 +150,18 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onDestroy() called")
     }
 
+    private fun changeButtonStatusIfCurrentQuestionIsGiven() {
+        if (quizViewModel.currentQuestionGiven) {
+            changeButtonState(false)
+        }
+    }
+
     private fun setGiven() {
-        questionBank[currentIndex].given = true
+        quizViewModel.setGivenTrue()
     }
 
     private fun setText() {
-        resultTextView.text = getString(R.string.correct_answers, resultAnswers, questionBank.size)
-    }
-
-    private fun calculateResult() {
-        var count: Int = 0
-
-        for (item in questionBank) {
-            if (item.given and item.correct) {
-                count += 1
-            }
-        }
-
-        resultAnswers = count
+        resultTextView.text = getString(R.string.correct_answers, quizViewModel.calculateResult(), quizViewModel.size)
     }
 
     private fun changeButtonState(state: Boolean) {
@@ -141,19 +170,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateQuestion() {
-        val questionTextResId = questionBank[currentIndex].textResId
+        val questionTextResId = quizViewModel.currentQuestionText
         questionTextView.setText(questionTextResId)
     }
 
     private fun checkAnswer(userAnswer: Boolean) {
-        val correctAnswer = questionBank[currentIndex].answer
-        val messageResId: Int
+        val correctAnswer = quizViewModel.currentQuestionAnswer
 
         if (userAnswer == correctAnswer) {
-            messageResId = R.string.correct_toast
-            questionBank[currentIndex].correct = true
-        } else {
-            messageResId = R.string.incorrect_toast
+            quizViewModel.setCorrectTrue()
+        }
+
+        var messageResId = when (userAnswer) {
+            correctAnswer -> R.string.correct_toast
+            else -> R.string.incorrect_toast
+        }
+
+        if (quizViewModel.isCheater) {
+            messageResId = R.string.judgment_toast
         }
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
