@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center"
     android:orientation="vertical">
 
@@ -23,13 +24,15 @@
 
         <Button
             android:id="@+id/true_button"
+            style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/true_button"
-            android:layout_marginEnd="24dp" />
+            android:layout_marginEnd="24dp"
+            android:text="@string/true_button" />
 
         <Button
             android:id="@+id/false_button"
+            style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/false_button" />
@@ -45,22 +48,29 @@
 
         <Button
             android:id="@+id/prev_button"
+            style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:background="@color/purple_500"
-            android:text="@string/prev_button"
             android:drawablePadding="4dp"
-            android:drawableStart="@drawable/arrow_left" />
+            android:text="@string/prev_button"
+            app:icon="@drawable/arrow_left"
+            app:iconTint="#CCFF90"
+            app:iconTintMode="src_in" />
 
         <Button
             android:id="@+id/next_button"
+            style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawablePadding="4dp"
             android:background="@color/purple_500"
+            app:icon="@drawable/arrow_right"
+            app:iconGravity="end"
+            android:drawablePadding="4dp"
             android:text="@string/next_button"
-            android:drawableEnd="@drawable/arrow_right" />
+            app:iconTint="#CCFF90"
+            app:iconTintMode="src_in" />
 
     </LinearLayout>
 

@@ -1,6 +1,7 @@
 package com.bignerdranch.android.geomain
 
 import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == REQUEST_CODE_CHEAT) {
             quizViewModel.isCheater = data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
+            quizViewModel.cheatCount = data?.getIntExtra(EXTRA_CHEAT, 0)!!
         }
     }
 
@@ -68,10 +70,16 @@ class MainActivity : AppCompatActivity() {
 
         changeButtonStatusIfCurrentQuestionIsGiven()
 
-        cheatButton.setOnClickListener{_: View ->
+        cheatButton.setOnClickListener{ view ->
             val answerIsTrue = quizViewModel.currentQuestionAnswer
-            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
-            startActivityForResult(intent, REQUEST_CODE_CHEAT)
+            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue, quizViewModel.cheatCount, quizViewModel.maxCheat)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val options = ActivityOptions.makeClipRevealAnimation(view, 0, 0, view.width, view.height)
+                startActivityForResult(intent, REQUEST_CODE_CHEAT, options.toBundle())
+            } else {
+                startActivityForResult(intent, REQUEST_CODE_CHEAT)
+            }
+
         }
 
         trueButton.setOnClickListener{ _: View ->
